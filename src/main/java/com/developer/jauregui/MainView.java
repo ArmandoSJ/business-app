@@ -1,29 +1,29 @@
 package com.developer.jauregui;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.dependency.CssImport;
-import com.vaadin.flow.component.html.H5;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.contextmenu.SubMenu;
+import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.tabs.Tab;
-import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.router.BeforeEnterEvent;
-import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.*;
-import com.developer.jauregui.views.acceso.LogIn;
 import com.developer.jauregui.authentication.properties.ConexionBD;
 import com.developer.jauregui.authentication.properties.GetConexion;
 import com.developer.jauregui.authentication.properties.GetProperties;
-import com.developer.jauregui.views.Home;
+import com.vaadin.flow.theme.Theme;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -34,7 +34,7 @@ import java.util.Map;
  * The main view contains a button and a click listener.
  */
 @PWA(name = "Project Base for Vaadin", shortName = "Project Base", enableInstallPrompt = false)
-@CssImport("./styles/shared-styles.css")
+@Theme(themeFolder = "myapp")
 public class MainView extends AppLayout implements PageConfigurator {
         //implements BeforeEnterObserver {
 
@@ -56,10 +56,10 @@ public class MainView extends AppLayout implements PageConfigurator {
     private GetConexion con;
 
     //Componentes
-    private final Tabs tabs = new Tabs();
+    private final Image imageLogo =  new Image("img/logo.png", "My App logo");
     private final Map<Class<? extends Component>, Tab> navigationTargetToTab = new HashMap<>();
     private final DrawerToggle dtgMenu = new DrawerToggle();
-    private H5 viewTitle;
+    private H2 viewTitle;
     private final Locale LocalEs = new Locale("es","MX");
 
     public MainView() {
@@ -74,6 +74,9 @@ public class MainView extends AppLayout implements PageConfigurator {
         inicializar();
         cargaListener();
 
+    }
+
+    private void cargaListener() {
     }
 
     /**
@@ -92,51 +95,54 @@ public class MainView extends AppLayout implements PageConfigurator {
 
 
     private void inicializar(){
-
-        viewTitle = new H5();
-        viewTitle.getStyle().set("text-align","center");
-
-
-        createMenuLink(Home.class, Home.HOME_VIEW,
-                VaadinIcon.HOME.create());
-        tabs.setOrientation(Tabs.Orientation.VERTICAL);
-
-        setPrimarySection(AppLayout.Section.DRAWER);
-        addToDrawer(tabs);
-        addToNavbar(dtgMenu);
-    }
-    private void cargaListener(){
-
+        imageLogo.setHeight("80px");
+        addToNavbar(createHeaderContent());
     }
 
-    private void  createMenuLink(Class<? extends Component> target,
-                                      String caption, Icon icon) {
-        final Tab tab = new Tab();
-        final RouterLink routerLink = new RouterLink(null, target);
-        routerLink.setClassName("menu-link");
-        navigationTargetToTab.put(target, tab);
-        routerLink.add(icon);
-        routerLink.add(new Span(caption));
-        icon.setSize("24px");
-        tab.add(routerLink);
-        tabs.add(tab);
+    private Component createHeaderContent() {
+        HorizontalLayout layout = new HorizontalLayout();
+        layout.setWidthFull();
+        layout.setId("header");
+        layout.setAlignItems(FlexComponent.Alignment.CENTER);
+        viewTitle = new H2();
+        //viewTitle.getStyle().set("text-align","center");
+        layout.add(imageLogo, viewTitle);
+        layout.add(viewTitle, createMainMenu(), new Avatar());
+        return layout;
     }
 
-/*    @Override
-    public void beforeEnter(BeforeEnterEvent event) {
-        tabs.setSelectedTab(navigationTargetToTab.get(event.getNavigationTarget()));
-        if (VaadinSession.getCurrent().getAttribute("USUARIOID") == null) {
-            VaadinSession.getCurrent().setAttribute("intededPath", event.getLocation().getPath());
-            event.forwardTo(LogIn.class);
-        }
-    }*/
 
+    private MenuBar createMainMenu(){
+        MenuBar menuBar = new MenuBar();
 
+        menuBar.addThemeVariants(MenuBarVariant.LUMO_TERTIARY);
+        menuBar.setOpenOnHover(true);
 
-    public static MainView get() {
-        return (MainView) UI.getCurrent().getChildren()
-                .filter(component -> component.getClass() == MainView.class)
-                .findFirst().get();
+        Text selected = new Text("");
+
+        MenuItem project = menuBar.addItem("Project");
+        MenuItem account = menuBar.addItem("Account");
+        menuBar.addItem("Sign Out", e -> selected.setText("Sign Out"));
+
+        SubMenu projectSubMenu = project.getSubMenu();
+        MenuItem users = projectSubMenu.addItem("Users");
+        MenuItem billing = projectSubMenu.addItem("Billing");
+
+        SubMenu usersSubMenu = users.getSubMenu();
+        usersSubMenu.addItem("List", e -> selected.setText("List"));
+        usersSubMenu.addItem("Add", e -> selected.setText("Add"));
+
+        SubMenu billingSubMenu = billing.getSubMenu();
+        billingSubMenu.addItem("Invoices", e -> selected.setText("Invoices"));
+        billingSubMenu.addItem("Balance Events",
+                e -> selected.setText("Balance Events"));
+
+        account.getSubMenu().addItem("Edit Profile",
+                e -> selected.setText("Edit Profile"));
+        account.getSubMenu().addItem("Privacy Settings",
+                e -> selected.setText("Privacy Settings"));
+
+        return menuBar;
     }
 
 
@@ -146,6 +152,12 @@ public class MainView extends AppLayout implements PageConfigurator {
         viewTitle.setText(getCurrentPageTitle());
     }
 
+
+    public static MainView get() {
+        return (MainView) UI.getCurrent().getChildren()
+                .filter(component -> component.getClass() == MainView.class)
+                .findFirst().get();
+    }
 
 
     private String getCurrentPageTitle() {
